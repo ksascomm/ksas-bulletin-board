@@ -25,7 +25,7 @@ License: GPL2
 			'parent_item_colon' => ''
 		);
 		
-		$taxonomies = array();
+		$taxonomies = array('category');
 		
 		$supports = array('title','editor','thumbnail','excerpt','revisions');
 		
@@ -68,33 +68,38 @@ add_action('widgets_init', 'ksas_register_bulletin_widgets');
 class Bulletin_Board_Widget extends WP_Widget {
 
 	function Bulletin_Board_Widget() {
-		$widget_ops = array('classname' => 'widget_bulletin_board', 'description' => __( "Bulletin Board Widget") );
-		$this->WP_Widget('bulletin-board-widget', 'Bulletin Board Widget', $widget_ops);
+		$widget_options = array( 'classname' => 'ksas_bulletin', 'description' => __('Displays bulletin board entries based on category', 'ksas_bulletin') );
+		$control_options = array( 'width' => 300, 'height' => 350, 'id_base' => 'ksas_bulletin-widget' );
+		$this->WP_Widget( 'ksas_bulletin-widget', __('Bulletin Board', 'ksas_bulletin'), $widget_options, $control_options );
 	}
 
 	function widget( $args, $instance ) {
 		extract($args);
-		$title = apply_filters('widget_title', $instance['title'], $instance, $this->id_base);
-
+		/* Our variables from the widget settings. */
+		$title = apply_filters('widget_title', $instance['title'] );
+		$category_choice = $instance['category_choice'];
+		$quantity = $instance['quantity'];
 		echo $before_widget;
-		if ( $title )
-			echo $before_title . $title . $after_title;                     
-	
 
-		global $post; ?>
-		<?php global $wp_query;
-			$bulletin_board_query = new WP_Query("post_type=bulletinboard&post_status=publish&posts_per_page=5"); ?>
-<div class="bulletinboard">
-    	<h3><img src="<?php bloginfo('template_url'); ?>/assets/img/arrow.png" width="25" height="25" />Bulletin Board</h3>
-					<?php while ($bulletin_board_query->have_posts()) : $bulletin_board_query->the_post(); ?>
-    	
-    	<h4><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h4>
-    	<?php the_excerpt(); ?>
-    	
-	
-	
+		/* Display the widget title if one was input (before and after defined by themes). */
+		if ( $title )
+			echo $before_title . $title . $after_title;
+			$bulletin_board_query = new WP_Query(array(
+			"post_type" => "bulletinboard",
+			"cat" => $category_choice,
+			"post_status" => "publish",
+			"posts_per_page" => $quantity)); ?>
+			
+			<?php while ($bulletin_board_query->have_posts()) : $bulletin_board_query->the_post(); ?>
+			<article>
+				<a href="<?php the_permalink(); ?>">
+					<h6><?php the_date(); ?></h6>
+					<p><b><?php the_title(); ?></b></br>
+					<?php echo get_the_excerpt(); ?></p>
+				</a>
+			</article>
 	<?php endwhile; ?>
-	<p align="right"><a href="<?php bloginfo('url'); ?>/bulletin_board">View all &gt;&gt;</a></p>
+	<p align="right"><a href="<?php echo home_url('/category/'); echo $category_choice;?>?post_type=bulletinboard">View more<span class="icon-arrow-right"></span></a></p>
 </div>
 
 
@@ -102,21 +107,52 @@ class Bulletin_Board_Widget extends WP_Widget {
 
 	}
 
+	/* Widget Options */
 	function form( $instance ) {
-		$instance = wp_parse_args( (array) $instance, array( 'title' => '') );
-		$title = $instance['title'];
-?>
-		
-<?php
+
+		/* Set up some default widget settings. */
+		$defaults = array( 'title' => __('Bulletin Board', 'ksas_bulletin'), 'quantity' => __('3', 'ksas_bulletin'), 'category_choice' => '1' );
+		$instance = wp_parse_args( (array) $instance, $defaults ); ?>
+
+		<!-- Widget Title: Text Input -->
+		<p>
+			<label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php _e('Title:', 'hybrid'); ?></label>
+			<input id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" value="<?php echo $instance['title']; ?>" style="width:100%;" />
+		</p>
+
+		<!-- Number of Stories: Text Input -->
+		<p>
+			<label for="<?php echo $this->get_field_id( 'quantity' ); ?>"><?php _e('Number of stories to display:', 'ksas_recent'); ?></label>
+			<input id="<?php echo $this->get_field_id( 'quantity' ); ?>" name="<?php echo $this->get_field_name( 'quantity' ); ?>" value="<?php echo $instance['quantity']; ?>" style="width:100%;" />
+		</p>
+		<!-- Choose Profile Type: Select Box -->
+		<p>
+			<label for="<?php echo $this->get_field_id( 'category_choice' ); ?>"><?php _e('Choose Category:', 'ksas_bulletin'); ?></label> 
+			<select id="<?php echo $this->get_field_id( 'category_choice' ); ?>" name="<?php echo $this->get_field_name( 'category_choice' ); ?>" class="widefat" style="width:100%;">
+			<?php global $wpdb;
+				$categories = get_categories(array(
+								'orderby'                  => 'name',
+								'order'                    => 'ASC',
+								'hide_empty'               => 1,
+								'taxonomy' => 'category'));
+		    foreach($categories as $category){
+		    	$category_choice = $category->slug;
+		        $category_title = $category->name; ?>
+		       <option value="<?php echo $category_choice; ?>" <?php if ( $category_choice == $instance['category_choice'] ) echo 'selected="selected"'; ?>><?php echo $category_title; ?></option>
+		    <?php } ?>
+			</select>
+		</p>
+	<?php
 	}
+}
 
 	function update( $new_instance, $old_instance ) {
 		$instance = $old_instance;
 		$new_instance = wp_parse_args((array) $new_instance, array( 'title' => ''));
 		$instance['title'] = strip_tags($new_instance['title']);
+		$instance['category_choice'] = $new_instance['category_choice'];
+		$instance['quantity'] = $new_instance['quantity'];
 		return $instance;
 	}
-
-}
 
 ?>
