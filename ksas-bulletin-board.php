@@ -25,7 +25,7 @@ License: GPL2
 			'parent_item_colon' => ''
 		);
 		
-		$taxonomies = array('category');
+		$taxonomies = array('bbtype');
 		
 		$supports = array('title','editor','thumbnail','excerpt','revisions');
 		
@@ -57,6 +57,42 @@ License: GPL2
 		 register_post_type('bulletinboard',$post_type_args);
 	}
 	add_action('init', 'register_bulletinboard_posttype');
+// registration code for bbtype taxonomy
+function register_bbtype_tax() {
+	$labels = array(
+		'name' 					=> _x( 'Bulletin Types', 'taxonomy general name' ),
+		'singular_name' 		=> _x( 'Bulletin Type', 'taxonomy singular name' ),
+		'add_new' 				=> _x( 'Add New Bulletin Type', 'Bulletin Type'),
+		'add_new_item' 			=> __( 'Add New Bulletin Type' ),
+		'edit_item' 			=> __( 'Edit Bulletin Type' ),
+		'new_item' 				=> __( 'New Bulletin Type' ),
+		'view_item' 			=> __( 'View Bulletin Type' ),
+		'search_items' 			=> __( 'Search Bulletin Types' ),
+		'not_found' 			=> __( 'No Bulletin Type found' ),
+		'not_found_in_trash' 	=> __( 'No Bulletin Type found in Trash' ),
+	);
+	
+	$pages = array('bulletinboard');
+				
+	$args = array(
+		'labels' 			=> $labels,
+		'singular_label' 	=> __('Bulletin Type'),
+		'public' 			=> true,
+		'show_ui' 			=> true,
+		'hierarchical' 		=> true,
+		'show_tagcloud' 	=> false,
+		'show_in_nav_menus' => false,
+		'rewrite' 			=> array('slug' => 'bbtype', 'with_front' => false ),
+	 );
+	register_taxonomy('bbtype', $pages, $args);
+}
+add_action('init', 'register_bbtype_tax');								
+
+function add_bbtype_terms() {
+	wp_insert_term('undergraduate', 'bbtype',  array('description'=> 'Undergraduate','slug' => 'undergrad-bb'));
+	wp_insert_term('graduate', 'bbtype',  array('description'=> 'Graduate','slug' => 'graduate-bb'));
+}
+add_action('init', 'add_bbtype_terms');
 
 //Register bulletin board widget
 add_action('widgets_init', 'ksas_register_bulletin_widgets');
@@ -86,11 +122,11 @@ class Bulletin_Board_Widget extends WP_Widget {
 			echo $before_title . $title . $after_title;
 			$bulletin_board_query = new WP_Query(array(
 			"post_type" => "bulletinboard",
-			"cat" => $category_choice,
+			"bbtype" => $category_choice,
 			"post_status" => "publish",
 			"posts_per_page" => $quantity)); ?>
 			
-			<?php while ($bulletin_board_query->have_posts()) : $bulletin_board_query->the_post(); ?>
+			<?php if ( $bulletin_board_query->have_posts() ) : while ($bulletin_board_query->have_posts()) : $bulletin_board_query->the_post(); ?>
 			<article>
 				<a href="<?php the_permalink(); ?>">
 					<h6><?php the_date(); ?></h6>
@@ -99,8 +135,10 @@ class Bulletin_Board_Widget extends WP_Widget {
 				</a>
 			</article>
 	<?php endwhile; ?>
-	<p align="right"><a href="<?php echo home_url('/category/'); echo $category_choice;?>?post_type=bulletinboard">View more<span class="icon-arrow-right"></span></a></p>
-</div>
+		<article>
+			<p align="right"><a href="<?php echo home_url('/bbtype/'); echo $category_choice;?>">View more<span class="icon-arrow-right"></span></a></p>
+		</article>
+	<?php endif; ?>
 
 
 <?php echo $after_widget;
@@ -125,7 +163,7 @@ class Bulletin_Board_Widget extends WP_Widget {
 			<label for="<?php echo $this->get_field_id( 'quantity' ); ?>"><?php _e('Number of stories to display:', 'ksas_recent'); ?></label>
 			<input id="<?php echo $this->get_field_id( 'quantity' ); ?>" name="<?php echo $this->get_field_name( 'quantity' ); ?>" value="<?php echo $instance['quantity']; ?>" style="width:100%;" />
 		</p>
-		<!-- Choose Profile Type: Select Box -->
+		<!-- Choose Bulletin Type: Select Box -->
 		<p>
 			<label for="<?php echo $this->get_field_id( 'category_choice' ); ?>"><?php _e('Choose Category:', 'ksas_bulletin'); ?></label> 
 			<select id="<?php echo $this->get_field_id( 'category_choice' ); ?>" name="<?php echo $this->get_field_name( 'category_choice' ); ?>" class="widefat" style="width:100%;">
@@ -134,7 +172,7 @@ class Bulletin_Board_Widget extends WP_Widget {
 								'orderby'                  => 'name',
 								'order'                    => 'ASC',
 								'hide_empty'               => 1,
-								'taxonomy' => 'category'));
+								'taxonomy' => 'bbtype'));
 		    foreach($categories as $category){
 		    	$category_choice = $category->slug;
 		        $category_title = $category->name; ?>
@@ -154,5 +192,94 @@ class Bulletin_Board_Widget extends WP_Widget {
 		$instance['quantity'] = $new_instance['quantity'];
 		return $instance;
 	}
+	
+//CREATE COLUMNS IN ADMIN
 
+add_filter( 'manage_edit-bulletinboard_columns', 'my_bulletinboard_columns' ) ;
+
+function my_bulletinboard_columns( $columns ) {
+
+	$columns = array(
+		'cb' => '<input type="checkbox" />',
+		'title' => __( 'Name' ),
+		'type' => __( 'Type' ),
+		'date' => __( 'Date' ),
+	);
+
+	return $columns;
+}
+
+add_action( 'manage_bulletinboard_posts_custom_column', 'my_manage_bulletinboard_columns', 10, 2 );
+
+function my_manage_bulletinboard_columns( $column, $post_id ) {
+	global $post;
+
+	switch( $column ) {
+
+		/* If displaying the 'role' column. */
+		case 'type' :
+
+			/* Get the roles for the post. */
+			$terms = get_the_terms( $post_id, 'bbtype' );
+
+			/* If terms were found. */
+			if ( !empty( $terms ) ) {
+
+				$out = array();
+
+				/* Loop through each term, linking to the 'edit posts' page for the specific term. */
+				foreach ( $terms as $term ) {
+					$out[] = sprintf( '<a href="%s">%s</a>',
+						esc_url( add_query_arg( array( 'post_type' => $post->post_type, 'role' => $term->slug ), 'edit.php' ) ),
+						esc_html( sanitize_term_field( 'name', $term->name, $term->term_id, 'role', 'display' ) )
+					);
+				}
+
+				/* Join the terms, separating them with a comma. */
+				echo join( ', ', $out );
+			}
+
+			/* If no terms were found, output a default message. */
+			else {
+				_e( 'No Type Assigned' );
+			}
+
+			break;
+
+		/* Just break out of the switch statement for everything else. */
+		default :
+			break;
+	}
+}
+
+// CREATE FILTERS WITH CUSTOM TAXONOMIES
+
+
+function bulletinboard_add_taxonomy_filters() {
+	global $typenow;
+
+	// An array of all the taxonomyies you want to display. Use the taxonomy name or slug
+	$taxonomies = array('bbtype', 'filter');
+ 
+	// must set this to the post type you want the filter(s) displayed on
+	if ( $typenow == 'bulletinboard' ) {
+ 
+		foreach ( $taxonomies as $tax_slug ) {
+			$current_tax_slug = isset( $_GET[$tax_slug] ) ? $_GET[$tax_slug] : false;
+			$tax_obj = get_taxonomy( $tax_slug );
+			$tax_name = $tax_obj->labels->name;
+			$terms = get_terms($tax_slug);
+			if ( count( $terms ) > 0) {
+				echo "<select name='$tax_slug' id='$tax_slug' class='postform'>";
+				echo "<option value=''>$tax_name</option>";
+				foreach ( $terms as $term ) {
+					echo '<option value=' . $term->slug, $current_tax_slug == $term->slug ? ' selected="selected"' : '','>' . $term->name .' (' . $term->count .')</option>';
+				}
+				echo "</select>";
+			}
+		}
+	}
+}
+
+add_action( 'restrict_manage_posts', 'bulletinboard_add_taxonomy_filters' );
 ?>
