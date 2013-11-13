@@ -3,7 +3,7 @@
 Plugin Name: KSAS Bulletin Board
 Plugin URI: http://krieger2.jhu.edu/comm/web/plugins/bulletin-board
 Description: Creates a custom post type for bulletins.  Link to http://siteurl/bulletinboard/*bbtype-slug* to display bulletins.  Bulletins do not display in homepage news feed. Plugin also creates a widget to display bulletins in sidebars.  Use in conjunction with Post Expirator plugin if you want bulletins to automatically expire/archive/delete.
-Version: 2.0
+Version: 2.1
 Author: Cara Peckens
 Author URI: mailto:cpeckens@jhu.edu
 License: GPL2
@@ -131,7 +131,7 @@ class Bulletin_Board_Widget extends WP_Widget {
 				<a href="<?php the_permalink(); ?>">
 					<h6><?php the_date(); ?></h6>
 					<p><b><?php the_title(); ?></b></br>
-					<?php echo get_the_excerpt(); ?></p>
+					<?php $excerpt = get_the_excerpt(); $new_excerpt = limit_words($excerpt, 10); echo $new_excerpt; ?></p>
 				</a>
 			</article>
 	<?php endwhile; ?>
