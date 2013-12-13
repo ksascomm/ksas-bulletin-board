@@ -88,12 +88,33 @@ function register_bbtype_tax() {
 }
 add_action('init', 'register_bbtype_tax');								
 
-function add_bbtype_terms() {
-	wp_insert_term('undergraduate', 'bbtype',  array('description'=> 'Undergraduate','slug' => 'undergrad-bb'));
-	wp_insert_term('graduate', 'bbtype',  array('description'=> 'Graduate','slug' => 'graduate-bb'));
+function check_bbtype_terms(){
+ 
+        // see if we already have populated any terms
+    $term = get_terms( 'bbtype', array( 'hide_empty' => false ) );
+ 
+    // if no terms then lets add our terms
+    if( empty( $term ) ){
+        $terms = define_bbtype_terms();
+        foreach( $terms as $term ){
+            if( !term_exists( $term['name'], 'bbtype' ) ){
+                wp_insert_term( $term['name'], 'bbtype', array( 'slug' => $term['slug'] ) );
+            }
+        }
+    }
 }
-add_action('init', 'add_bbtype_terms');
 
+add_action( 'init', 'check_bbtype_terms' );
+
+function define_bbtype_terms(){
+ 
+$terms = array(
+		'0' => array( 'name' => 'undergraduate','slug' => 'undergrad-bb'),
+		'1' => array( 'name' => 'graduate','slug' => 'graduate-bb'),    
+		);
+ 
+    return $terms;
+}
 //Register bulletin board widget
 add_action('widgets_init', 'ksas_register_bulletin_widgets');
 	function ksas_register_bulletin_widgets() {
