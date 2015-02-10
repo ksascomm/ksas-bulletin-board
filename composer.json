@@ -1,0 +1,28 @@
+{
+  "name": "ksascomm/ksas-bulletin-board",
+  "type": "wordpress-plugin",
+  "license": "GPL2",
+  "description": " Widgets for SE Calendar, Stories from the Hub (widget, template tag, and shortcode), Custom RSS, News from another site, search form shortcode",
+  "homepage": "http://github.com/ksascomm/plugin_bulletin_board",
+  "authors": [
+      {
+      "name": "Cara Peckens",
+      "email": "ksasweb@jhu.edu",
+      "homepage": "http://krieger.jhu.edu"
+      }
+    ],
+    "keywords": [
+      "wordpress"
+    ],
+  "support": {
+    "issues": "http://krieger.jhu.edu"
+  },
+  "require": {
+    "php": ">=5.3.0",
+    "composer/installers": "~1.0"
+  },
+  "replace": {
+        "cpeckens/plugin_bulletin_board": "1.0.*"
+    }
+}
+
