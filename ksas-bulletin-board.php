@@ -127,7 +127,7 @@ class Bulletin_Board_Widget extends WP_Widget {
 	function Bulletin_Board_Widget() {
 		$widget_options = array( 'classname' => 'ksas_bulletin', 'description' => __('Displays bulletin board entries based on category', 'ksas_bulletin') );
 		$control_options = array( 'width' => 300, 'height' => 350, 'id_base' => 'ksas_bulletin-widget' );
-		$this->WP_Widget( 'ksas_bulletin-widget', __('Bulletin Board', 'ksas_bulletin'), $widget_options, $control_options );
+		parent::__construct( 'ksas_bulletin-widget', __('Bulletin Board', 'ksas_bulletin'), $widget_options, $control_options );
 	}
 
 	function widget( $args, $instance ) {
@@ -148,16 +148,19 @@ class Bulletin_Board_Widget extends WP_Widget {
 			"posts_per_page" => $quantity)); ?>
 			
 			<?php if ( $bulletin_board_query->have_posts() ) : while ($bulletin_board_query->have_posts()) : $bulletin_board_query->the_post(); ?>
-			<article>
-				<a href="<?php the_permalink(); ?>">
-					<h6><?php the_date(); ?></h6>
-					<p><b><?php the_title(); ?></b></br>
-					<?php $excerpt = get_the_excerpt(); $new_excerpt = limit_words($excerpt, 10); echo $new_excerpt; ?></p>
-				</a>
+			<article id="post-<?php the_ID(); ?>" class="row" role="article">	
+				<div class="small-12 columns">
+				<h4><?php the_date(); ?></h4>
+				<h5><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h5>
+					<p>
+					<?php $excerpt = get_the_excerpt(); $new_excerpt = limit_words($excerpt, 10); echo $new_excerpt; ?>
+						
+					</p>
+				</div>
 			</article>
 	<?php endwhile; ?>
 		<article>
-			<p align="right"><a href="<?php echo home_url('/bbtype/'); echo $category_choice;?>">View more<span class="icon-arrow-right"></span></a></p>
+			<p><a href="<?php echo home_url('/bbtype/'); echo $category_choice;?>">View more Bulletins <span class="fa fa-chevron-circle-right" aria-hidden="true"></span></a></p>
 		</article>
 	<?php endif; ?>
 
@@ -251,8 +254,8 @@ function my_manage_bulletinboard_columns( $column, $post_id ) {
 				/* Loop through each term, linking to the 'edit posts' page for the specific term. */
 				foreach ( $terms as $term ) {
 					$out[] = sprintf( '<a href="%s">%s</a>',
-						esc_url( add_query_arg( array( 'post_type' => $post->post_type, 'role' => $term->slug ), 'edit.php' ) ),
-						esc_html( sanitize_term_field( 'name', $term->name, $term->term_id, 'role', 'display' ) )
+						esc_url( add_query_arg( array( 'post_type' => $post->post_type, 'bbtype' => $term->slug ), 'edit.php' ) ),
+						esc_html( sanitize_term_field( 'name', $term->name, $term->term_id, 'bbtype', 'display' ) )
 					);
 				}
 
