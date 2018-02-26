@@ -24,11 +24,11 @@ License: GPL2
 			'not_found_in_trash'=> __( 'No Bulletins found in Trash' ),
 			'parent_item_colon' => ''
 		);
-		
+
 		$taxonomies = array('bbtype');
-		
+
 		$supports = array('title','editor','thumbnail','excerpt','revisions');
-		
+
 		$post_type_args = array(
 			'labels' 			=> $labels,
 			'singular_label' 	=> __('Bulletin'),
@@ -46,10 +46,10 @@ License: GPL2
 				'read_private_posts' => 'read_private_bulletins',
 				'edit_post' => 'edit_bulletin',
 				'delete_post' => 'delete_bulletin',
-				'read_post' => 'read_bulletin',),			
+				'read_post' => 'read_bulletin',),
 			'has_archive' 		=> true,
 			'hierarchical' 		=> false,
-			'rewrite' 			=> array('slug' => 'bulletin_board', 'with_front' => false ),
+			'rewrite' 			=> array('slug' => 'bulletin-board', 'with_front' => false ),
 			'supports' 			=> $supports,
 			'menu_position' 	=> 5,
 			'taxonomies'		=> $taxonomies
@@ -71,9 +71,9 @@ function register_bbtype_tax() {
 		'not_found' 			=> __( 'No Bulletin Type found' ),
 		'not_found_in_trash' 	=> __( 'No Bulletin Type found in Trash' ),
 	);
-	
+
 	$pages = array('bulletinboard');
-				
+
 	$args = array(
 		'labels' 			=> $labels,
 		'singular_label' 	=> __('Bulletin Type'),
@@ -86,13 +86,13 @@ function register_bbtype_tax() {
 	 );
 	register_taxonomy('bbtype', $pages, $args);
 }
-add_action('init', 'register_bbtype_tax');								
+add_action('init', 'register_bbtype_tax');
 
 function check_bbtype_terms(){
- 
+
         // see if we already have populated any terms
     $term = get_terms( 'bbtype', array( 'hide_empty' => false ) );
- 
+
     // if no terms then lets add our terms
     if( empty( $term ) ){
         $terms = define_bbtype_terms();
@@ -107,12 +107,12 @@ function check_bbtype_terms(){
 add_action( 'init', 'check_bbtype_terms' );
 
 function define_bbtype_terms(){
- 
+
 $terms = array(
 		'0' => array( 'name' => 'undergraduate','slug' => 'undergrad-bb'),
-		'1' => array( 'name' => 'graduate','slug' => 'graduate-bb'),    
+		'1' => array( 'name' => 'graduate','slug' => 'graduate-bb'),
 		);
- 
+
     return $terms;
 }
 //Register bulletin board widget
@@ -146,20 +146,17 @@ class Bulletin_Board_Widget extends WP_Widget {
 			"bbtype" => $category_choice,
 			"post_status" => "publish",
 			"posts_per_page" => $quantity)); ?>
-			
+
 			<?php if ( $bulletin_board_query->have_posts() ) : while ($bulletin_board_query->have_posts()) : $bulletin_board_query->the_post(); ?>
-			<article id="post-<?php the_ID(); ?>" class="row" role="article">	
+			<article aria-label="<?php the_title(); ?>" class="row" role="article">
 				<div class="small-12 columns">
-				<h4><?php the_date(); ?></h4>
+				<h4><?php the_time('F j, Y'); ?></h4>
 				<h5><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h5>
-					<p>
-					<?php $excerpt = get_the_excerpt(); $new_excerpt = limit_words($excerpt, 10); echo $new_excerpt; ?>
-						
-					</p>
+					<p><?php echo wp_trim_words( get_the_excerpt(), 10, '...' ); ?></p>
 				</div>
 			</article>
 	<?php endwhile; ?>
-		<article>
+		<article aria-label="Bulletins Archive">
 			<p><a href="<?php echo home_url('/bbtype/'); echo $category_choice;?>">View more Bulletins <span class="fa fa-chevron-circle-right" aria-hidden="true"></span></a></p>
 		</article>
 	<?php endif; ?>
@@ -189,7 +186,7 @@ class Bulletin_Board_Widget extends WP_Widget {
 		</p>
 		<!-- Choose Bulletin Type: Select Box -->
 		<p>
-			<label for="<?php echo $this->get_field_id( 'category_choice' ); ?>"><?php _e('Choose Category:', 'ksas_bulletin'); ?></label> 
+			<label for="<?php echo $this->get_field_id( 'category_choice' ); ?>"><?php _e('Choose Category:', 'ksas_bulletin'); ?></label>
 			<select id="<?php echo $this->get_field_id( 'category_choice' ); ?>" name="<?php echo $this->get_field_name( 'category_choice' ); ?>" class="widefat" style="width:100%;">
 			<?php global $wpdb;
 				$categories = get_categories(array(
@@ -216,7 +213,7 @@ class Bulletin_Board_Widget extends WP_Widget {
 		$instance['quantity'] = $new_instance['quantity'];
 		return $instance;
 	}
-	
+
 //CREATE COLUMNS IN ADMIN
 
 add_filter( 'manage_edit-bulletinboard_columns', 'my_bulletinboard_columns' ) ;
@@ -284,10 +281,10 @@ function bulletinboard_add_taxonomy_filters() {
 
 	// An array of all the taxonomyies you want to display. Use the taxonomy name or slug
 	$taxonomies = array('bbtype', 'filter');
- 
+
 	// must set this to the post type you want the filter(s) displayed on
 	if ( $typenow == 'bulletinboard' ) {
- 
+
 		foreach ( $taxonomies as $tax_slug ) {
 			$current_tax_slug = isset( $_GET[$tax_slug] ) ? $_GET[$tax_slug] : false;
 			$tax_obj = get_taxonomy( $tax_slug );
