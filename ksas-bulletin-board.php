@@ -181,10 +181,8 @@ function my_manage_bulletinboard_columns( $column, $post_id ) {
 
 				/* Join the terms, separating them with a comma. */
 				echo join( ', ', $out );
-			}
-
-			/* If no terms were found, output a default message. */
-			else {
+			} else {
+				/* If no terms were found, output a default message. */
 				_e( 'No Type Assigned' );
 			}
 
@@ -293,11 +291,11 @@ class Bulletin_Board_Widget extends WP_Widget {
 			$category_title  = $category->name;
 			?>
 			<option value="<?php echo $category_choice; ?>" 
-									<?php
-									if ( $category_choice == $instance['category_choice'] ) {
-										echo 'selected="selected"';
-									}
-									?>
+				<?php
+				if ( $category_choice == $instance['category_choice'] ) {
+					echo 'selected="selected"';
+				}
+				?>
 			><?php echo $category_title; ?></option>
 		<?php } ?>
 		</select>
@@ -307,16 +305,15 @@ class Bulletin_Board_Widget extends WP_Widget {
 
 	/** Widget Display */
 	public function widget( $args, $instance ) {
-		extract( $args );
 		/** Our variables from the widget settings. */
 		$title           = apply_filters( 'widget_title', $instance['title'] );
 		$category_choice = $instance['category_choice'];
 		$quantity        = $instance['quantity'];
-		echo $before_widget;
+		echo $args['before_widget'];
 
 		/** Display the widget title if one was input (before and after defined by themes). */
 		if ( $title ) {
-			echo $before_title . $title . $after_title;
+			echo $args['before_title'] . $title . $args['after_title'];
 		}
 
 		$bulletin_board_query = new WP_Query(
@@ -352,7 +349,7 @@ class Bulletin_Board_Widget extends WP_Widget {
 		</article>
 
 		<?php endif;
-		echo $after_widget;
+		echo $args['after_widget'];
 
 	}
 
@@ -364,7 +361,7 @@ function ksas_register_bulletin_widgets() {
 	register_widget( 'Bulletin_Board_Widget' );
 }
 
-/** The following expires posts after 6 months */
+/** The following expires posts after 9 months */
 
 /** Set up cron when plugin activated */
 register_activation_hook( __FILE__, 'bulletin_plugin_activation' );
